@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h2>URL Shortener</h2>  
+
+        <label for="urlInput">הזן כתובת URL:</label>
+        <input type="text" id="urlInput" placeholder="https://example.com">
+        <button onclick="shortenUrl()">🔗 קצר URL</button>
+
+        <p id="shortenedUrl"></p>
+    </div>
+</body>
+</html>
