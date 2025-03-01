@@ -7,6 +7,13 @@ async function shortenUrl() {
         return;
     }
 
+    // בדיקת תקינות ה-URL
+    const urlPattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([\/\w .-]*)*\/?$/i;
+    if (!urlPattern.test(urlInput)) {
+        resultElement.innerHTML = "❌ הקישור אינו תקין";
+        return;
+    }
+
     try {
         const response = await fetch("/shorten", {
             method: "POST",
