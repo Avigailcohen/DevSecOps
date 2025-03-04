@@ -7,6 +7,8 @@ WORKDIR /app
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY --from=jenkins /var/jenkins_home /var/jenkins_home
+
 COPY . /app/
 
 EXPOSE 8080
