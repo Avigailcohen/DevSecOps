@@ -4,18 +4,18 @@ import random
 import string
 import re
 
-app = Flask(__name__)
+app1 = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///urls.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = SQLAlchemy(app)
+app1.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///urls.db"
+app1.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app1)
 
 class URL(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     original_url = db.Column(db.String(500), nullable=False)
     short_url = db.Column(db.String(10), unique=True, nullable=False)
 
-with app.app_context():
+with app1.app_context():
     db.create_all()
 
 def generate_short_url():
@@ -33,11 +33,11 @@ def is_valid_url(url):
     )
     return re.match(url_regex, url) is not None
 
-@app.route("/")
+@app1.route("/")
 def home():
     return render_template("index.html")
 
-@app.route("/shorten", methods=["POST"])
+@app1.route("/shorten", methods=["POST"])
 def shorten_url():
     data = request.json
     original_url = data.get("url")
@@ -60,7 +60,7 @@ def shorten_url():
 
     return jsonify({"short_url": request.host_url + short_url})
 
-@app.route("/<short_url>")
+@app1.route("/<short_url>")
 def redirect_to_original(short_url):
     url_entry = URL.query.filter_by(short_url=short_url).first()
     if url_entry:
@@ -68,4 +68,4 @@ def redirect_to_original(short_url):
     return jsonify({"error": "Short URL not found"}), 404
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app1.run(host="0.0.0.0", port=8080, debug=True)
