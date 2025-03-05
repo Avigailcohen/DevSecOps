@@ -68,4 +68,8 @@ def redirect_to_original(short_url):
     return jsonify({"error": "Short URL not found"}), 404
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     app1.run(host="0.0.0.0", port=8080, debug=True)
+=======
+    app.run(host="0.0.0.0", port=5000, debug=True)
+>>>>>>> 641669f4bed8c3f7f76165f6587f035660888c89
