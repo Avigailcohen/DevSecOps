@@ -6,15 +6,12 @@ WORKDIR /app
 
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
-<<<<<<< HEAD
 RUN pip install Werkzeug===2.2.2
-=======
-Run pip install Werkzeug===2.2.2
->>>>>>> 1693a5c (Saving local changes before rebase)
 
 
 
 COPY . /app/
+
 
 
 
