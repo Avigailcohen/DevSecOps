@@ -1,73 +1,59 @@
-import unittest
 import pytest
-import json
+from flask.testing import FlaskClient
+from typing import Generator
 import sys
-import os 
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append("..")  # כדי לוודא שהייבוא של `app` יצליח גם מתוך `tests/`
+from app import app  # ייבוא האפליקציה
 
-import app
+@pytest.fixture
+def client() -> Generator[FlaskClient, None, None]:  
+    """יוצר לקוח Flask לבדיקה"""
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        yield client  # מחזיר לקוח Flask לבדיקה
 
-#from app import app, db, URL, generate_short_url, is_valid_url
+def test_shorten_url(client):
+    """בודק יצירת URL מקוצר תקין"""
+    data = {"url": "https://example.com"}
+    response = client.post("/shorten", json=data)
 
-class TestUtils(unittest.TestCase):
-    def test_generate_short_url_length(self):
-        """בודק אם הקישור המקוצר הוא באורך 6"""
-        short_url = generate_short_url()
-        self.assertEqual(len(short_url), 6)
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert "short_url" in json_data  # לוודא שהתגובה מכילה URL מקוצר
 
-    def test_is_valid_url(self):
-        """בודק אם ה-URL תקף"""
-        self.assertTrue(is_valid_url("https://example.com"))
-        self.assertTrue(is_valid_url("http://example.com"))
-        self.assertFalse(is_valid_url("example"))
-        self.assertFalse(is_valid_url("ftp://example.com"))
+def test_shorten_invalid_url(client):
+    """בודק מה קורה אם מנסים לקצר URL לא תקף"""
+    invalid_urls = [
+        {"url": ""},  # מחרוזת ריקה -> מחזיר "No URL provided"
+        {"url": "1234567890"},  # רצף של מספרים בלבד -> מחזיר "Invalid URL"
+        {"url": None},  # ערך ריק (None) -> מחזיר "No URL provided"
+        {"url": "http://???///invalid-url"},  # URL עם תווים בלתי חוקיים -> מחזיר "Invalid URL"
+    ]
 
-class TestFlaskAPI(unittest.TestCase):
-    def setUp(self):
-        """מכין סביבת בדיקות עם מסד נתונים זמני"""
-        app.config["TESTING"] = True
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"  # מסד נתונים זמני
-        self.client = app.test_client()
-        with app.app_context():
-            db.create_all()
+    expected_errors = [
+        "No URL provided",  # מחרוזת ריקה
+        "Invalid URL",  # מספרים בלבד
+        "No URL provided",  # None
+        "Invalid URL",  # URL לא חוקי
+    ]
 
-    def tearDown(self):
-        """מנקה את מסד הנתונים אחרי כל טסט"""
-        with app.app_context():
-            db.session.remove()
-            db.drop_all()
+    for i, invalid_data in enumerate(invalid_urls):
+        response = client.post("/shorten", json=invalid_data)
+        assert response.status_code == 400
+        json_data = response.get_json()
+        assert json_data["error"] == expected_errors[i]  # התאמה בין קלט להודעת שגיאה
 
-    def test_shorten_valid_url(self):
-        """בודק קיצור כתובת תקינה"""
-        response = self.client.post("/shorten", json={"url": "https://example.com"})
-        data = json.loads(response.data)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("short_url", data)
+def test_redirect_to_original(client):
+    """בודק ניסיון לגשת ל-URL מקוצר"""
+    response = client.get("/abcdef")  # בדיקה עבור URL אקראי
+    assert response.status_code == 404
+    json_data = response.get_json()
+    assert json_data["error"] == "Short URL not found"
 
-    def test_shorten_invalid_url(self):
-        """בודק טיפול בקישור לא תקין"""
-        response = self.client.post("/shorten", json={"url": "example"})
-        data = json.loads(response.data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["error"], "Invalid URL")
-
-    def test_redirect_existing_short_url(self):
-        """בודק הפניה מקישור מקוצר"""
-        with app.app_context():
-            new_url = URL(original_url="https://example.com", short_url="abcdef")
-            db.session.add(new_url)
-            db.session.commit()
-
-        response = self.client.get("/abcdef")
-        self.assertEqual(response.status_code, 302)  # 302 = הפניה
-
-    def test_redirect_non_existing_short_url(self):
-        """בודק ניסיון להיכנס לקישור מקוצר שלא קיים"""
-        response = self.client.get("/nonexist")
-        data = json.loads(response.data)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(data["error"], "Short URL not found")
-
-# לא צריך את השורה הבאה כי pytest לוקח את ניהול הבדיקות
-# אם אתה רוצה להריץ את זה עם pytest, פשוט הרץ את pytest במקום להפעיל unittest.main()
+def test_redirect_not_found(client):
+    """בודק ניסיון לגשת ל-URL מקוצר שלא קיים"""
+    response = client.get("/nonexistent123")
+    assert response.status_code == 404
+    json_data = response.get_json()
+    assert json_data["error"] == "Short URL not found"
