@@ -1,0 +1,84 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env/
+
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+*.out
+*.err
+
+# Config and environment files
+.env
+*.ini
+*.cfg
+instance/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Coverage reports
+htmlcov/
+.coverage
+*.cover
+*.py,cover
+
+# Testing outputs
+.tox/
+.nox/
+*.testresult
+.cache/
+pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# Packaging files
+*.wheel
+*.egg
+.Python
+pip-log.txt
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Deployment and CI/CD
+*.bak
+*.pid
+docker-compose.override.yml
+.envrc
+terraform.tfstate*
+terraform.tfvars
+ansible.log
+secrets.yml
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+Dockerfile
+
+# Node.js (למקרה של ממשק פרונטנד נוסף)
+node_modules/
+npm-debug.log
+yarn.lock
+package-lock.json
