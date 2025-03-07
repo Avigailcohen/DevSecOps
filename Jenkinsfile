@@ -5,6 +5,7 @@ pipeline {
         IMAGE_NAME = 'appproject'
         CONTAINER_NAME = 'url-shorter'
         REPO_URL = 'https://github.com/YOUR-USERNAME/YOUR-REPO.git'
+        GITHUB_TOKEN = credentials('github-token') // יש להגדיר את ה-TOKEN ב-Jenkins
     }
 
     stages {
@@ -60,9 +61,34 @@ pipeline {
             }
         }
 
+        stage('Auto Merge to Main') {
+            when {
+                not {
+                    branch 'main'
+                }
+            }
+            steps {
+                script {
+                    sh '''
+                    echo "Merging branch ${env.BRANCH_NAME} into main"
+                    git config --global user.email "jenkins@yourdomain.com"
+                    git config --global user.name "Jenkins"
+                    
+                    git checkout main
+                    git pull origin main
+                    git merge --no-ff ${env.BRANCH_NAME}
+                    
+                    git push git@github.com:Avigailcohen/DevSecOps.git main
+
+
+                    '''
+                }
+            }
+        }
+
         stage('Deploy') {
             when {
-                branch 'main'  // רק אם אנחנו על main נבצע Deploy
+                branch 'main'
             }
             steps {
                 script {
