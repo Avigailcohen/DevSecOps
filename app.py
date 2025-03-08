@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, redirect, render_template
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy 
 import random
 import string
 import re
