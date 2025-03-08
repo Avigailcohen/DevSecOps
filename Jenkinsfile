@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "Checked out branch:"
+                echo "Checked out branch:hh"
                 
             }
         }
