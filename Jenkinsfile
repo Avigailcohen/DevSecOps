@@ -1,3 +1,4 @@
+echo "test go inside the file"
 pipeline {
     agent any
 
