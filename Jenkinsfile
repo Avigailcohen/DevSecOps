@@ -4,19 +4,15 @@ pipeline {
     environment {
         IMAGE_NAME = 'appproject'
         CONTAINER_NAME = 'url-shorter'
-        REPO_URL = 'https://github.com/YOUR-USERNAME/YOUR-REPO.git'
-        GITHUB_TOKEN = credentials('github-token') // יש להגדיר את ה-TOKEN ב-Jenkins
+        REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
     }
 
     stages {
         stage('Checkout') {
             steps {
+                checkout scm
                 script {
-                    sh '''
-                    echo "Checking out branch: ${env.BRANCH_NAME}"
-                    git clone --depth=1 $REPO_URL .
-                    git checkout ${env.BRANCH_NAME}
-                    '''
+                    echo "Checked out branch: ${env.BRANCH_NAME}"
                 }
             }
         }
@@ -24,7 +20,15 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 script {
-                    sh 'pip install -r requirements.txt'
+                    sh '''
+                    echo "Checking for pip..."
+                    if ! command -v pip &> /dev/null; then
+                        echo "pip not found! Trying to install..."
+                        apt-get update && apt-get install -y python3-pip
+                    fi
+                    echo "Installing dependencies..."
+                    pip install -r requirements.txt
+                    '''
                 }
             }
         }
@@ -33,13 +37,9 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    CONTAINER_ID=$(docker ps -q --filter "name=$CONTAINER_NAME")
-                    if [ ! -z "$CONTAINER_ID" ]; then
-                        echo "Stopping existing container: $CONTAINER_ID"
-                        docker stop $CONTAINER_ID
-                        docker rm $CONTAINER_ID
-                    fi
-                    docker system prune -f
+                    echo "Cleaning up old containers..."
+                    docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
+                    docker container prune -f
                     '''
                 }
             }
@@ -48,7 +48,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t $IMAGE_NAME ."
+                    sh '''
+                    echo "Building Docker image..."
+                    docker build -t $IMAGE_NAME .
+                    '''
                 }
             }
         }
@@ -56,31 +59,9 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    sh "docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest"
-                }
-            }
-        }
-
-        stage('Auto Merge to Main') {
-            when {
-                not {
-                    branch 'main'
-                }
-            }
-            steps {
-                script {
                     sh '''
-                    echo "Merging branch ${env.BRANCH_NAME} into main"
-                    git config --global user.email "jenkins@yourdomain.com"
-                    git config --global user.name "Jenkins"
-                    
-                    git checkout main
-                    git pull origin main
-                    git merge --no-ff ${env.BRANCH_NAME}
-                    
-                    git push git@github.com:Avigailcohen/DevSecOps.git main
-
-
+                    echo "Running tests with pytest..."
+                    docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest || exit 1
                     '''
                 }
             }
@@ -93,8 +74,11 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    echo "Deploying Flask App..."
-                    docker run -d --name $CONTAINER_NAME -p 8080:8080 $IMAGE_NAME
+                    echo "Deploying Flask App on port 5000..."
+                    
+                    docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
+                    
+                    docker run -d --name $CONTAINER_NAME -p 5000:5000 $IMAGE_NAME
                     '''
                 }
             }
