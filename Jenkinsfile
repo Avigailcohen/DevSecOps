@@ -1,9 +1,5 @@
-node { 
-    stage('Test Stage') { 
-        echo "Pipeline is running!" 
-    } 
-}
-/*pipeline {
+
+pipeline {
     agent any
 
 
@@ -15,7 +11,7 @@ node {
             }
         }
     }
-    environment {
+   /* environment {
         IMAGE_NAME = 'appproject'
         CONTAINER_NAME = 'url-shorter'
         REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
@@ -98,6 +94,5 @@ node {
             }
         }
     }
-   
+    */
 }
- */
