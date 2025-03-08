@@ -1,8 +1,17 @@
-echo "test go inside the file"
+
 pipeline {
     agent any
 
-    environment {
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo "Checked out branch:"
+                
+            }
+        }
+    }
+   /* environment {
         IMAGE_NAME = 'appproject'
         CONTAINER_NAME = 'url-shorter'
         REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
@@ -85,4 +94,5 @@ pipeline {
             }
         }
     }
+    */
 }
