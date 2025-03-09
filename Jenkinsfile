@@ -5,14 +5,15 @@ pipeline {
         IMAGE_NAME = 'appproject'
         CONTAINER_NAME = 'url-shorter'
         REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
+        DOCKER_HOST = 'tcp://docker-in-docker:2375' // 🔹 הגדרת החיבור לדוקר
     }
 
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    deleteDir()  // 🔹 מנקה את כל ה-Workspace לפני הורדה חדשה
-                    checkout scm // 🔹 מוריד את הקוד בצורה מובנית של Jenkins
+                    deleteDir()
+                    checkout scm
                 }
             }
         }
@@ -20,12 +21,14 @@ pipeline {
         stage('Clean Up Old Containers') {
             steps {
                 script {
-                    sh '''
-                    set -e
-                    echo "Cleaning up old containers..."
-                    docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
-                    docker container prune -f
-                    '''
+                    withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) { // 🔹 שימוש ב-DIND
+                        sh '''
+                        set -e
+                        echo "Cleaning up old containers..."
+                        docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
+                        docker container prune -f
+                        '''
+                    }
                 }
             }
         }
@@ -33,11 +36,13 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh '''
-                    set -e
-                    echo "Building Docker image..."
-                    docker build -t $IMAGE_NAME .
-                    '''
+                    withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) { // 🔹 שימוש ב-DIND
+                        sh '''
+                        set -e
+                        echo "Building Docker image..."
+                        docker build -t $IMAGE_NAME .
+                        '''
+                    }
                 }
             }
         }
@@ -45,11 +50,13 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    sh '''
-                    set -e
-                    echo "Running tests with pytest..."
-                    docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest || exit 1
-                    '''
+                    withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) { // 🔹 שימוש ב-DIND
+                        sh '''
+                        set -e
+                        echo "Running tests with pytest..."
+                        docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest || exit 1
+                        '''
+                    }
                 }
             }
         }
@@ -60,14 +67,14 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    set -e
-                    echo "Deploying Flask App on port 5000..."
-                    
-                    docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
-                    
-                    docker run -d --name $CONTAINER_NAME -p 5000:5000 $IMAGE_NAME
-                    '''
+                    withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) { // 🔹 שימוש ב-DIND
+                        sh '''
+                        set -e
+                        echo "Deploying Flask App on port 5000..."
+                        docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
+                        docker run -d --name $CONTAINER_NAME -p 5000:5000 $IMAGE_NAME
+                        '''
+                    }
                 }
             }
         }
