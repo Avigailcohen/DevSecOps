@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = 'appproject'
         CONTAINER_NAME = 'url-shorter'
         REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
-        DOCKER_HOST = 'tcp://docker-in-docker:2375' // 🔹 הגדרת החיבור לדוקר
+        DOCKER_HOST = 'tcp://docker-in-docker:2375' // 🔹 שימוש ב-DIND
     }
 
     stages {
@@ -67,15 +67,25 @@ pipeline {
             }
             steps {
                 script {
-                      withCredentials([string(credentialsId: 'github-token', variable: 'GIT_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'github-token', variable: 'GIT_TOKEN')]) {
                         sh '''
                         echo "Merging develop into main..."
                         git config --global user.email "jenkins@yourdomain.com"
                         git config --global user.name "Jenkins CI"
+                        
+                        # ודא שהבראנץ' develop קיים מקומית
+                        git branch -a
+                        git fetch origin develop:develop
+                        
+                        # העברה ל-main
                         git checkout main
                         git pull origin main
+                        
+                        # ביצוע merge
                         git merge --no-ff develop -m "Auto-merge develop -> main via Jenkins"
-                        git push https://$GIT_USER:$GIT_PASS@github.com/Avigailcohen/DevSecOps.git main
+                        
+                        # דחיפת השינויים ל-GitHub
+                        git push https://$GIT_TOKEN@github.com/Avigailcohen/DevSecOps.git main
                         '''
                     }
                 }
