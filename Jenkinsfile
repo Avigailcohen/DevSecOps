@@ -11,25 +11,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    deleteDir()  // 🔹 מנקה את כל ה-Workspace לפני ההורדה
-                    checkout scm // 🔹 הורדת הקוד באמצעות Jenkins
-                }
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                script {
-                    sh '''
-                    set -e
-                    echo "Checking for pip..."
-                    if ! command -v pip &> /dev/null; then
-                        echo "pip not found! Trying to install..."
-                        sudo apt-get update && sudo apt-get install -y python3-pip
-                    fi
-                    echo "Installing dependencies..."
-                    pip install -r requirements.txt
-                    '''
+                    deleteDir()  // 🔹 מנקה את כל ה-Workspace לפני הורדה חדשה
+                    checkout scm // 🔹 מוריד את הקוד בצורה מובנית של Jenkins
                 }
             }
         }
