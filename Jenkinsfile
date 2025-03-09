@@ -61,22 +61,68 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+       pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'appproject'
+        CONTAINER_NAME = 'url-shorter'
+        REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    deleteDir()
+                    checkout scm
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh '''
+                    echo "Building Docker image..."
+                    docker build -t $IMAGE_NAME .
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    sh '''
+                    echo "Running tests with pytest..."
+                    docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest
+                    '''
+                }
+            }
+        }
+
+        stage('Merge to Main') {
             when {
-                branch 'main'
+                branch 'develop'
             }
             steps {
                 script {
-                    withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) { // 🔹 שימוש ב-DIND
+                    withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                         sh '''
-                        set -e
-                        echo "Deploying Flask App on port 5000..."
-                        docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
-                        docker run -d --name $CONTAINER_NAME -p 5000:5000 $IMAGE_NAME
+                        echo "Merging develop into main..."
+                        git config --global user.email "jenkins@yourdomain.com"
+                        git config --global user.name "Jenkins CI"
+                        git checkout main
+                        git pull origin main
+                        git merge --no-ff develop -m "Auto-merge develop -> main via Jenkins"
+                        git push https://$GIT_USER:$GIT_PASS@github.com/Avigailcohen/DevSecOps.git main
                         '''
                     }
                 }
             }
         }
     }
+}
+
 }
