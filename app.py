@@ -26,7 +26,7 @@ def is_valid_url(url):
     """בודק אם הקלט הוא URL תקף"""
     url_regex = re.compile(
         r'^(https?:\/\/)?' 
-        r'(([A-Za-z0-9-]+\.)+[A-Za-z]{2,6}|'  # שם דומיין
+        r'(([A-Za-z0-9-]+\.)+[A-Za-z]{2,6}|'  
         r'localhost|'  # או localhost
         r'\d{1,3}(\.\d{1,3}){3})'  # או כתובת IP
         r'(:\d+)?(\/[^\s]*)?$'  # פורט אופציונלי ושאר הנתיב
