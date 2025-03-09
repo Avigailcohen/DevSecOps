@@ -10,9 +10,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
                 script {
-                    echo "Checked out branch: ${env.BRANCH_NAME}"
+                    sh '''
+                    # שימוש ב-bash כדי למנוע שגיאות תחביר
+                    set -e
+                    echo "Checking out branch: $BRANCH_NAME"
+                    git clone --depth=1 "$REPO_URL" .
+                    git checkout "$BRANCH_NAME"
+                    '''
                 }
             }
         }
@@ -21,16 +26,16 @@ pipeline {
             steps {
                 script {
                     sh '''
+                    set -e
                     echo "Checking for pip..."
                     if ! command -v pip &> /dev/null; then
                         echo "pip not found! Trying to install..."
-                        apt-get update && apt-get install -y python3-pip
+                        sudo apt-get update && sudo apt-get install -y python3-pip
                     fi
                     echo "Installing dependencies..."
                     pip install -r requirements.txt
                     '''
                 }
-               
             }
         }
 
@@ -38,6 +43,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                    set -e
                     echo "Cleaning up old containers..."
                     docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
                     docker container prune -f
@@ -50,6 +56,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                    set -e
                     echo "Building Docker image..."
                     docker build -t $IMAGE_NAME .
                     '''
@@ -61,6 +68,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                    set -e
                     echo "Running tests with pytest..."
                     docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest || exit 1
                     '''
@@ -75,6 +83,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                    set -e
                     echo "Deploying Flask App on port 5000..."
                     
                     docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
