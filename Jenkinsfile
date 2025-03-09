@@ -11,13 +11,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    sh '''
-                    # שימוש ב-bash כדי למנוע שגיאות תחביר
-                    set -e
-                    echo "Checking out branch: $BRANCH_NAME"
-                    git clone --depth=1 "$REPO_URL" .
-                    git checkout "$BRANCH_NAME"
-                    '''
+                    deleteDir()  // 🔹 מנקה את כל ה-Workspace לפני ההורדה
+                    checkout scm // 🔹 הורדת הקוד באמצעות Jenkins
                 }
             }
         }
