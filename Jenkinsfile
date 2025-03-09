@@ -61,7 +61,7 @@ pipeline {
             }
         }
 
-        stage('Merge to Main') {
+       /* stage('Merge to Main') {
             when {
                 branch 'develop'
             }
@@ -95,7 +95,7 @@ pipeline {
                     }
                 }
             }
-        }
+        }*/
 
         stage('Deploy') {
             when {
