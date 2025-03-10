@@ -67,14 +67,14 @@ pipeline {
             }
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'github-token', variable: 'GIT_TOKEN')], usernameVariable: 'GIT_USER',passwordVariable: 'GIT_TOKEN') {
+                    withCredentials([string(credentialsId: 'github-token',usernameVariable:'GIT_USER', passwordvariable: 'GIT_TOKEN')], usernameVariable: 'GIT_USER',passwordVariable: 'GIT_TOKEN') {
                         sh '''
                         echo "Merging develop into main..."
                         git config --global user.email "jenkins@yourdomain.com"
                         git config --global user.name "Jenkins CI"
 
                         # הגדרת Authentication ל-GitHub באמצעות ה-TOKEN
-                        git remote set-url origin https://$GIT_TOKEN@github.com/Avigailcohen/DevSecOps.git
+                        git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@github.com/Avigailcohen/DevSecOps.git
 
                         # ודא שהבראנץ' develop קיים מקומית
                         git fetch origin develop:develop
