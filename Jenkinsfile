@@ -67,7 +67,7 @@ pipeline {
             }
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'github-token',usernameVariable:'GIT_USER', passwordvariable: 'GIT_TOKEN')], usernameVariable: 'GIT_USER',passwordVariable: 'GIT_TOKEN') {
+                    withCredentials([string(credentialsId: '4',usernameVariable:'GIT_USER', passwordvariable: 'GIT_TOKEN')], usernameVariable: 'GIT_USER',passwordVariable: 'GIT_TOKEN') {
                         sh '''
                         echo "Merging develop into main..."
                         git config --global user.email "jenkins@yourdomain.com"
