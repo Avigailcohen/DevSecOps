@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'appproject'
+        IMAGE_NAME = 'avigacoh/appproject' // 🔹 עדכון לשם המשתמש שלך ב-Docker Hub
         CONTAINER_NAME = 'url-shorter'
         REPO_URL = 'https://github.com/Avigailcohen/DevSecOps.git'
         DOCKER_HOST = 'tcp://docker-in-docker:2375' // 🔹 שימוש ב-DIND
@@ -23,7 +23,6 @@ pipeline {
                 script {
                     withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) {
                         sh '''
-                        set -e
                         echo "Cleaning up old containers..."
                         docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
                         docker container prune -f
@@ -38,9 +37,23 @@ pipeline {
                 script {
                     withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) {
                         sh '''
-                        set -e
                         echo "Building Docker image..."
                         docker build -t $IMAGE_NAME .
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') { // 🔹 שלב חדש להעלאה ל-Docker Hub
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh '''
+                        echo "Logging in to Docker Hub..."
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        echo "Pushing Docker image to Docker Hub..."
+                        docker push $IMAGE_NAME
                         '''
                     }
                 }
@@ -52,36 +65,8 @@ pipeline {
                 script {
                     withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) {
                         sh '''
-                        set -e
                         echo "Running tests with pytest..."
                         docker run --rm -e PYTHONPATH=/app $IMAGE_NAME pytest || exit 1
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Merge to Main') {
-            when {
-                branch 'develop'
-            }
-            steps {
-                script {
-                    withCredentials([string(credentialsId: 'github-token', variable: 'GIT_TOKEN')]) {
-                        sh '''
-                        echo "Merging develop into main..."
-                        git config --global user.email "jenkins@yourdomain.com"
-                        git config --global user.name "Jenkins CI"
-
-                        git remote set-url origin https://$GIT_TOKEN@github.com/Avigailcohen/DevSecOps.git
-                        git fetch origin develop:develop
-                        git checkout develop
-                        git pull origin develop
-                        git checkout main
-                        git pull --rebase origin main
-                        git reset --hard origin/main
-                        git merge --no-ff develop -m "Auto-merge develop -> main via Jenkins"
-                        git push origin main
                         '''
                     }
                 }
@@ -96,7 +81,6 @@ pipeline {
                 script {
                     withEnv(["DOCKER_HOST=tcp://docker-in-docker:2375"]) {
                         sh '''
-                        set -e
                         echo "Deploying Flask App on port 5000..."
                         docker ps -q --filter "name=$CONTAINER_NAME" | xargs -r docker stop | xargs -r docker rm
                         docker run -d --name $CONTAINER_NAME -p 5000:5000 $IMAGE_NAME
